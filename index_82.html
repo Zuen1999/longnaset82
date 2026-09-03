@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>龍安民眾閱覽室 · 自習座位圖</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#10233B;
+    --ink-soft:#41597A;
+    --paper:#E7EDF3;
+    --card:#F8FAFC;
+    --line-soft:#CFDAE5;
+    --free:#1F8A6D;
+    --busy:#B4472F;
+    --away:#C08A22;
+    --focus:#2F6BD8;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:var(--paper);color:var(--ink);
+    font-family:"Noto Sans TC",system-ui,sans-serif;font-size:15px;line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:22px 18px 48px}
+
+  header{border:1.5px solid var(--ink);background:var(--card);padding:18px 20px 16px}
+  .eyebrow{
+    font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.22em;
+    color:var(--ink-soft);margin:0 0 6px;
+  }
+  h1{
+    font-family:"Noto Serif TC",serif;font-weight:900;
+    font-size:clamp(24px,4.4vw,38px);line-height:1.15;margin:0;letter-spacing:.02em;
+  }
+
+  .counts{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    border:1.5px solid var(--ink);border-top:none;background:var(--card);
+  }
+  .count{padding:12px 16px;border-right:1px solid var(--line-soft)}
+  .count:last-child{border-right:none}
+  .count .n{font-family:"IBM Plex Mono",monospace;font-size:26px;font-weight:600;line-height:1}
+  .count .l{font-size:12px;color:var(--ink-soft);letter-spacing:.08em;margin-top:4px}
+  .count.free .n{color:var(--free)} .count.busy .n{color:var(--busy)} .count.away .n{color:var(--away)}
+  @media(max-width:560px){.counts{grid-template-columns:repeat(2,1fr)}
+    .count{border-bottom:1px solid var(--line-soft)}}
+
+  main{display:grid;grid-template-columns:1fr 220px;gap:18px;margin-top:18px;align-items:start}
+  @media(max-width:820px){main{grid-template-columns:1fr}}
+
+  .plan{
+    position:relative;container-type:inline-size;
+    aspect-ratio:1000/640;width:100%;
+    background:var(--card);border:2px solid var(--ink);overflow:hidden;
+  }
+  .aisle{
+    position:absolute;top:0;bottom:0;
+    background:repeating-linear-gradient(90deg,transparent 0 7px,#DFE7EF 7px 8px);
+  }
+  .seat{
+    position:absolute;transform:translate(-50%,-50%);
+    display:grid;place-items:center;
+    font-family:"IBM Plex Mono",monospace;
+    font-size:clamp(6px,1.15cqw,12px);font-weight:600;
+    border:1.4px solid var(--ink);border-radius:3px;
+    background:#fff;color:var(--ink);padding:0;cursor:default;
+    transition:transform .12s ease,box-shadow .12s ease;
+  }
+  .seat::after{
+    content:"";position:absolute;left:14%;right:14%;bottom:-1px;height:2px;
+    background:var(--ink);opacity:.28;border-radius:2px;
+  }
+  .seat[data-s="free"]{background:#D6EFE6;border-color:var(--free);color:#0E5F49}
+  .seat[data-s="busy"]{
+    border-color:var(--busy);color:#fff;
+    background:repeating-linear-gradient(45deg,var(--busy) 0 3px,#96371F 3px 6px);
+  }
+  .seat[data-s="away"]{background:#FAEDCF;border-color:var(--away);color:#7A5410}
+  body.editing .seat{cursor:pointer}
+  body.editing .seat:hover{transform:translate(-50%,-50%) scale(1.12);box-shadow:0 0 0 2px var(--focus)}
+  .seat:focus-visible{outline:none;box-shadow:0 0 0 3px var(--focus)}
+
+  .side{display:flex;flex-direction:column;gap:12px}
+  .panel{border:1.5px solid var(--ink);background:var(--card);padding:14px 16px}
+  .legend{display:flex;flex-direction:column;gap:9px}
+  .lg{display:flex;align-items:center;gap:10px;font-size:13.5px}
+  .chip{width:16px;height:16px;border:1.4px solid var(--ink);border-radius:2px;flex:none}
+  .chip.free{background:#D6EFE6;border-color:var(--free)}
+  .chip.busy{background:repeating-linear-gradient(45deg,var(--busy) 0 3px,#96371F 3px 6px);border-color:var(--busy)}
+  .chip.away{background:#FAEDCF;border-color:var(--away)}
+  .btn{
+    display:block;width:100%;text-align:center;font-size:14px;font-weight:500;
+    font-family:"Noto Sans TC",sans-serif;
+    padding:9px 12px;background:#fff;color:var(--ink);
+    border:1.5px solid var(--ink);cursor:pointer;margin-bottom:8px;
+  }
+  .btn:last-child{margin-bottom:0}
+  .btn:hover{background:var(--ink);color:#fff}
+  .btn:focus-visible{outline:3px solid var(--focus);outline-offset:1px}
+  .btn.on{background:var(--ink);color:#fff}
+  .btn.ghost{border-style:dashed;color:var(--ink-soft)}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <p class="eyebrow">臺北市 · 大安區</p>
+    <h1>龍安民眾閱覽室<br>自習座位圖</h1>
+  </header>
+
+  <section class="counts">
+    <div class="count"><div class="n" id="c-total">0</div><div class="l">座位總數</div></div>
+    <div class="count free"><div class="n" id="c-free">0</div><div class="l">空位</div></div>
+    <div class="count busy"><div class="n" id="c-busy">0</div><div class="l">使用中</div></div>
+    <div class="count away"><div class="n" id="c-away">0</div><div class="l">暫離</div></div>
+  </section>
+
+  <main>
+    <div class="plan" id="plan" aria-label="自修室座位圖"></div>
+
+    <aside class="side">
+      <div class="panel">
+        <div class="legend">
+          <div class="lg"><span class="chip free"></span>空位</div>
+          <div class="lg"><span class="chip busy"></span>使用中</div>
+          <div class="lg"><span class="chip away"></span>暫離</div>
+        </div>
+      </div>
+      <div class="panel">
+        <button class="btn" id="edit">編輯</button>
+        <button class="btn ghost" id="reset">全部清空</button>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<script>
+/* ═══ 座位排列設定：共 82 席 ═══
+   平面固定 1000 × 640 單位，網頁會自動等比縮放。
+   每一列寫成 { y: 該列高度, xs: [每個座位的水平位置] }，
+   座號依照陣列順序自動編為 01 ~ 82。 */
+
+const L = [60,130,200,270,340,410];        // 左半區 6 欄
+const R = [590,660,730,800,870,940];       // 右半區 6 欄
+const BACK = [95,185,275,365,455,545,635,725,815,905];  // 後方靠牆長桌 10 席
+
+const LAYOUT = [
+  { y: 70,  xs:[...L,...R] },   // 01–12
+  { y:150,  xs:[...L,...R] },   // 13–24
+  { y:230,  xs:[...L,...R] },   // 25–36
+  { y:310,  xs:[...L,...R] },   // 37–48
+  { y:390,  xs:[...L,...R] },   // 49–60
+  { y:470,  xs:[...L,...R] },   // 61–72
+  { y:580,  xs:BACK        },   // 73–82
+];
+
+const SEAT_W = 62, SEAT_H = 50;      // 單一書桌尺寸
+const AISLE  = {x:455, w:90};        // 中央走道
+
+const ORDER = ["free","busy","away"];
+const NAME  = {free:"空位", busy:"使用中", away:"暫離"};
+const KEY   = "longan-seatmap-v1";
+
+const SEATS = [];
+LAYOUT.forEach(row=>{
+  row.xs.forEach(x=>{
+    SEATS.push({ id:String(SEATS.length+1).padStart(2,"0"), x, y:row.y });
+  });
+});
+
+let state = {};
+let editing = false;
+
+const plan = document.getElementById("plan");
+const pct = (v,max)=> (v/max*100)+"%";
+
+const aisle = document.createElement("div");
+aisle.className = "aisle";
+aisle.style.left = pct(AISLE.x,1000);
+aisle.style.width = pct(AISLE.w,1000);
+aisle.style.bottom = "22%";
+plan.appendChild(aisle);
+
+SEATS.forEach(s=>{
+  const b = document.createElement("button");
+  b.className = "seat";
+  b.type = "button";
+  b.id = "seat-"+s.id;
+  b.style.left   = pct(s.x,1000);
+  b.style.top    = pct(s.y,640);
+  b.style.width  = pct(SEAT_W,1000);
+  b.style.height = pct(SEAT_H,640);
+  b.textContent  = s.id;
+  b.addEventListener("click",()=>{
+    if(!editing) return;
+    const cur = state[s.id] || "free";
+    state[s.id] = ORDER[(ORDER.indexOf(cur)+1) % ORDER.length];
+    render(); save();
+  });
+  plan.appendChild(b);
+});
+
+function render(){
+  let f=0,b=0,a=0;
+  SEATS.forEach(s=>{
+    const v = state[s.id] || "free";
+    const el = document.getElementById("seat-"+s.id);
+    el.dataset.s = v;
+    el.setAttribute("aria-label", `座位 ${s.id}，${NAME[v]}`);
+    if(v==="free") f++; else if(v==="busy") b++; else a++;
+  });
+  document.getElementById("c-total").textContent = SEATS.length;
+  document.getElementById("c-free").textContent  = f;
+  document.getElementById("c-busy").textContent  = b;
+  document.getElementById("c-away").textContent  = a;
+}
+
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+function load(){
+  try{ const raw = localStorage.getItem(KEY); if(raw) state = JSON.parse(raw); }catch(e){}
+}
+
+const editBtn = document.getElementById("edit");
+editBtn.addEventListener("click",()=>{
+  editing = !editing;
+  document.body.classList.toggle("editing", editing);
+  editBtn.classList.toggle("on", editing);
+  editBtn.textContent = editing ? "完成" : "編輯";
+});
+
+document.getElementById("reset").addEventListener("click",()=>{
+  state = {}; render(); save();
+});
+
+load();
+render();
+</script>
+</body>
+</html>
